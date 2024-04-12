@@ -11,6 +11,8 @@
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime.h>
 #include <hipblas.h>
+#include <hipsolver.h>
+#include <hiprand.h>
 #include <assert.h>
 #include <hip/hip_complex.h>
 
@@ -120,15 +122,36 @@ extern "C" void cuda_malloc_all(void **a_d, size_t Np, hipStream_t *stream )
 
   gpuErrchk(hipMallocAsync((void **) a_d,  Np ,stream[0]));
   //gpuErrchk(hipMalloc((void **) a_d,  Np ));
-/*   hipError_t err;
+   hipError_t err;
+  hipDeviceSynchronize();
+  err = hipGetLastError();
+//  if (err != hipSuccess) {
+    printf("allocated %d bytes at address %p with error: %s\n",Np,a_d, hipGetErrorString(err));
+//} 
+   return;
+}
+
+extern "C" void cuda_memset_async(void **a_d, int value,  size_t Np, hipStream_t *stream )
+{
+  hipError_t err;
   hipDeviceSynchronize();
   err = hipGetLastError();
   if (err != hipSuccess) {
     printf("CUDA error: %s\n", hipGetErrorString(err));
-} */
+} 
+  printf("trying to call memset with %p, %d, %d, %d\n",a_d, value , Np ,stream[0]); 
+  fflush(stdout); 
+  hipDeviceSynchronize();
+  //gpuErrchk(hipMemsetAsync((void **) a_d, value , Np ,stream[0]));
+  hipMemsetAsync((void **) a_d, value , Np ,stream[0]);
+  //gpuErrchk(hipMalloc((void **) a_d,  Np ));
+  hipDeviceSynchronize();
+  err = hipGetLastError();
+  if (err != hipSuccess) {
+    printf("CUDA error: %s\n", hipGetErrorString(err));
+} 
    return;
 }
-
 extern "C" void cuda_malloc_all_blocking(void **a_d, size_t Np)
 {
   gpuErrchk(hipMalloc( (void **) a_d,  Np ));
@@ -169,6 +192,7 @@ extern "C" void cuda_free_async(void **a_d, hipStream_t *stream )
 
 extern "C" void cuda_cpy_htod(void *a, void *a_d, size_t N, hipStream_t *stream )
 {
+  printf("trying to copy %d bytes from %p to %p \n",N,a,a_d);
   gpuErrchk(hipMemcpyAsync(a_d, a, N, hipMemcpyHostToDevice,stream[0] ));
   //gpuErrchk(hipMemcpy(a_d, a, N, hipMemcpyHostToDevice));
    return;
@@ -188,6 +212,7 @@ extern "C" void cuda_cpy_dtod(void *b_d, void *a_d,size_t N, hipStream_t* stream
 
 extern "C" void cuda_cpy_dtoh(void *a_d, void *a, size_t N, hipStream_t *stream )
 {
+  printf("trying to copy %d bytes from %p to %p \n",N,a_d,a);
   gpuErrchk(hipMemcpyAsync(a, a_d,  N, hipMemcpyDeviceToHost,stream[0]));
   //gpuErrchk(hipMemcpy(a, a_d,  N, hipMemcpyDeviceToHost));
    return;
@@ -266,6 +291,8 @@ extern "C" void create_cublas_handle(hipblasHandle_t *handle,hipStream_t *stream
  	  hipblasCreate(handle);
     hipStreamCreate(stream);
     hipblasSetStream(*handle, *stream);
+    hipsolverCreate(handle);
+    hipsolverSetStream(*handle,*stream);
     /*printf("\n cublas handle created \n");
     exit(0);*/
 
@@ -2328,6 +2355,8 @@ extern "C" void  gpu_get_2b_forces_energies(int i_beg, int i_end, int n_sparse, 
   kernel_get_2b<<<nblocks, nthreads,0,stream[0] >>>(i_beg, i_end, n_sparse, energies_d, e0, n_neigh_d, do_forces, forces_d, virial_d, 
 		                                    rjs_d, rcut, species_d, neighbor_species_d, sp1, sp2, buffer, delta, cutoff_d, 
 						    Qs_d, sigma, alphas_d, xyz_d);
+  //temporary, to measure timings
+  hipStreamSynchronize(stream[0]);
 }
 
 __global__
