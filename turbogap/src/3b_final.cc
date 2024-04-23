@@ -418,8 +418,11 @@ __global__ void kernel_2nd_try(
     }
   }
   __syncthreads();
-  int k = kappas_array[i] ;
+  int k = i_beg != 1 ?  kappas_array[i-i_beg+1] : kappas_array[i] ;
   auto i3 = ((neighbors_list[k]-1)% n_sites0) ;//+ 1;
+  //if(tid==0)
+  //  printf ("hello from i %d, my k is %d, i3 is: %d \n", i, k, i3);
+
   //  if(tid==0) {printf("starting kernel, got k and i3\n");}
   for (int j = 1; j < n_neigh[i]; ++j)
   {
