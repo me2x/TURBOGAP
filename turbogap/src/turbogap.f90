@@ -1704,12 +1704,9 @@ program turbogap
           time_3b(3) = time_3b(3) + time_3b(2) - time_3b(1)
         end do
         
-write(0,*) "doing memcpy d2h"
         call cpy_dtoh(energy_3b_d, c_loc(energies_3b),size_energy3b, gpu_stream)
         call cpy_dtoh(forces_3b_d, c_loc(forces_3b),size_forces3b, gpu_stream)
         call cpy_dtoh(virials_3b_d, c_loc(virial_3b),size_virial3b, gpu_stream)
-write(0,*) "memcpy done"
-write(0,*) energies_3b
         call gpu_free_async(cutoff_d,gpu_stream)
         call gpu_free_async(sigma_d,gpu_stream)
         call gpu_free_async(qs_d,gpu_stream)

@@ -126,7 +126,6 @@ extern "C" void cuda_malloc_all(void **a_d, size_t Np, hipStream_t *stream )
   hipDeviceSynchronize();
   err = hipGetLastError();
 //  if (err != hipSuccess) {
-    printf("allocated %d bytes at address %p with error: %s\n",Np,a_d, hipGetErrorString(err));
 //} 
    return;
 }
@@ -139,11 +138,10 @@ extern "C" void cuda_memset_async(void **a_d, int value,  size_t Np, hipStream_t
   if (err != hipSuccess) {
     printf("CUDA error: %s\n", hipGetErrorString(err));
 } 
-  printf("trying to call memset with %p, %d, %d, %d\n",a_d, value , Np ,stream[0]); 
   fflush(stdout); 
   hipDeviceSynchronize();
   //gpuErrchk(hipMemsetAsync((void **) a_d, value , Np ,stream[0]));
-  hipMemsetAsync((void **) a_d, value , Np ,stream[0]);
+  hipMemsetAsync( *a_d, value , Np ,stream[0]);
   //gpuErrchk(hipMalloc((void **) a_d,  Np ));
   hipDeviceSynchronize();
   err = hipGetLastError();
@@ -192,7 +190,6 @@ extern "C" void cuda_free_async(void **a_d, hipStream_t *stream )
 
 extern "C" void cuda_cpy_htod(void *a, void *a_d, size_t N, hipStream_t *stream )
 {
-  printf("trying to copy %d bytes from %p to %p \n",N,a,a_d);
   gpuErrchk(hipMemcpyAsync(a_d, a, N, hipMemcpyHostToDevice,stream[0] ));
   //gpuErrchk(hipMemcpy(a_d, a, N, hipMemcpyHostToDevice));
    return;
@@ -212,7 +209,6 @@ extern "C" void cuda_cpy_dtod(void *b_d, void *a_d,size_t N, hipStream_t* stream
 
 extern "C" void cuda_cpy_dtoh(void *a_d, void *a, size_t N, hipStream_t *stream )
 {
-  printf("trying to copy %d bytes from %p to %p \n",N,a_d,a);
   gpuErrchk(hipMemcpyAsync(a, a_d,  N, hipMemcpyDeviceToHost,stream[0]));
   //gpuErrchk(hipMemcpy(a, a_d,  N, hipMemcpyDeviceToHost));
    return;
